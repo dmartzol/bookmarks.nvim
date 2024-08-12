@@ -50,7 +50,7 @@ M.toggle = function()
 	end
 end
 
-M.print_all = function()
+M.print = function()
 	for i, pos in ipairs(bookmarks) do
 		print("Position " .. i .. ": Row " .. pos[1] .. ", Column " .. pos[2])
 	end
