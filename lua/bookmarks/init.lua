@@ -4,7 +4,6 @@ local M = {}
 local bookmarks = {}
 
 -- Define the sign for bookmarks
-vim.fn.sign_define("Explosion", { text = "💥", texthl = "SignColumn" })
 vim.fn.sign_define("Bookmark", { text = "⭕", texthl = "SignColumn" })
 
 -- Function to add a bookmark
