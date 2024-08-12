@@ -7,7 +7,7 @@ local bookmarks = {}
 vim.fn.sign_define("Explosion", { text = "💥", texthl = "SignColumn" })
 vim.fn.sign_define("Bookmark", { text = "⭕", texthl = "SignColumn" })
 
--- sign_place({id}, {group}, {name}, {buf} [, {dict}])
+-- Function to add a bookmark
 M.add = function()
 	local currentPosition = vim.api.nvim_win_get_cursor(0)
 	local line, col = currentPosition[1], currentPosition[2]
