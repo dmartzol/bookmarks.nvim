@@ -11,10 +11,13 @@ vim.fn.sign_define("Bookmark", { text = "⭕", texthl = "SignColumn" })
 M.add = function()
 	local currentPosition = vim.api.nvim_win_get_cursor(0)
 	local line, col = currentPosition[1], currentPosition[2]
+	-- let Neovim assign a unique ID automatically
 	local sign_id = vim.fn.sign_place(0, "bookmark", "Bookmark", 0, { lnum = line, priority = 10 })
+	-- store bookmark with its automatically assigned ID
 	table.insert(bookmarks, { line, col, id = sign_id })
 end
 
+-- Function to remove a bookmark
 M.remove = function()
 	local currentPosition = vim.api.nvim_win_get_cursor(0)
 	local line = currentPosition[1]
