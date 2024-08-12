@@ -21,10 +21,12 @@ end
 M.remove = function()
 	local currentPosition = vim.api.nvim_win_get_cursor(0)
 	local line = currentPosition[1]
-	for i, pos in ipairs(bookmarks) do
-		if pos[1] == line then
+	for i, bookmark in ipairs(bookmarks) do
+		if bookmark[1] == line then
+			-- Remove the sign using its stored unique ID
+			vim.fn.sign_unplace("bookmark", { buffer = 0, id = bookmark.id })
+			-- Remove the bookmark from the array
 			table.remove(bookmarks, i)
-			vim.fn.sign_unplace("Bookmark", { buffer = 0, id = 0 })
 			return
 		end
 	end
