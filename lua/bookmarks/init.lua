@@ -1,19 +1,24 @@
 local M = {}
+local namespace = "BookmarksNvim"
+local highlight_group = "BookmarksNvimSign"
+local vim = vim
 
 -- array to store line numbers and column numbers
 local bookmarks = {}
 
 -- Define the sign for bookmarks
--- potential symbol alternatives: ⭕
-vim.fn.sign_define("Bookmark", { text = "⚑", texthl = "SignColumn" })
+vim.fn.sign_define(highlight_group, { text = "⚑", texthl = highlight_group })
 
 -- Function to add a bookmark
 M.add = function()
-	local bufnr = vim.api.nvim_get_current_buf()
-	local path = vim.api.nvim_buf_get_name(bufnr)
+	local buf_number = vim.api.nvim_get_current_buf()
+	local path = vim.api.nvim_buf_get_name(buf_number)
 	local currentPosition = vim.api.nvim_win_get_cursor(0)
 	local line, col = currentPosition[1], currentPosition[2]
-	local sign_id = vim.fn.sign_place(0, "bookmark", "Bookmark", bufnr, { lnum = line, priority = 10 })
+
+	-- if the id provided is zero, then a new id is generated
+	local new_id = 0
+	local sign_id = vim.fn.sign_place(new_id, namespace, highlight_group, buf_number, { lnum = line })
 
 	-- Store bookmark with its full file path
 	table.insert(bookmarks, { path = path, line = line, col = col, id = sign_id })
@@ -27,7 +32,7 @@ M.remove = function()
 
 	for i, bookmark in ipairs(bookmarks) do
 		if bookmark.line == line and vim.api.nvim_buf_get_name(bufnr) == bookmark.path then
-			vim.fn.sign_unplace("bookmark", { buffer = bufnr, id = bookmark.id })
+			vim.fn.sign_unplace(namespace, { buffer = bufnr, id = bookmark.id })
 			table.remove(bookmarks, i)
 			return
 		end
