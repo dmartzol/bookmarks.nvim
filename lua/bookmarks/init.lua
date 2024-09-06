@@ -124,7 +124,41 @@ M.prev = function()
 	vim.api.nvim_win_set_cursor(0, { target.line, target.col })
 end
 
+-- Function to print the closes bookmark
 M.print = function()
+	if #bookmarks == 0 then
+		return
+	end
+
+	local currentFile = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
+	local bookmarkInCurrentFile = false
+	for _, bookmark in ipairs(bookmarks) do
+		if bookmark.path == currentFile then
+			bookmarkInCurrentFile = true
+			break
+		end
+	end
+
+	if not bookmarkInCurrentFile then
+		print("no bookmark in current file")
+		return
+	end
+
+	local currentPosition = vim.api.nvim_win_get_cursor(0)
+	local currentLine = currentPosition[1]
+	local closestBookmark = bookmarks[1]
+	for _, bookmark in ipairs(bookmarks) do
+		local dist = math.abs(bookmark.line - currentLine)
+		local closesDistance = math.abs(closestBookmark.line - currentLine)
+		if dist < closesDistance then
+			closestBookmark = bookmark
+		end
+	end
+
+	print("line: " .. closestBookmark.line)
+end
+
+M.printAll = function()
 	for i, pos in ipairs(bookmarks) do
 		print("Position " .. i .. ": Row " .. pos[1] .. ", Column " .. pos[2])
 	end
