@@ -36,12 +36,12 @@ end
 -- Function to check if the current line is bookmarked
 M.is_bookmarked = function()
 	local bufnr = vim.api.nvim_get_current_buf()
-	local path = vim.api.nvim_buf_get_name(bufnr)
+	local currentPath = vim.api.nvim_buf_get_name(bufnr)
 	local currentPosition = vim.api.nvim_win_get_cursor(0)
-	local line = currentPosition[1]
+	local currentLine = currentPosition[1]
 
 	for _, bookmark in ipairs(bookmarks) do
-		if bookmark.line == line and bookmark.path == path then
+		if bookmark.line == currentLine and bookmark.path == currentPath then
 			return true
 		end
 	end
