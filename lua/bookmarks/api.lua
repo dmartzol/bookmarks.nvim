@@ -1,14 +1,33 @@
 local vim = vim
-
 local namespace = "BookmarksDefault"
 local highlight_group = "BookmarksSignDefault"
--- array to store line numbers and column numbers
+
+---@class bookmark
+---@field id integer
+---@field filepath string
+---@field line integer
+---@field column integer
+
+---@type bookmark[]
 local bookmarks = {}
+
+---@class context
+---@field buffer_number integer
+---@field filepath string
+---@field line integer
+---@field column integer
+
+---@class sign
+---@field icon string
+---@field color string
+---@field line_bg string
 
 -- Define the sign for bookmarks
 -- mark = { icon = "󰃁", color = "red", line_bg = "#572626" },
 vim.fn.sign_define(highlight_group, { text = "󰃁", texthl = highlight_group })
 
+-- Function to gather the context of the current buffer
+-- @return context
 local function gather_context()
 	local bufer_number = vim.api.nvim_get_current_buf()
 	local buffer_path = vim.api.nvim_buf_get_name(bufer_number)
@@ -57,118 +76,103 @@ local function toggle()
 	end
 end
 
--- function to jump to the next bookmark
+---@param bookmark bookmark
+local function go_to_bookmark(bookmark)
+	-- Open the file if needed and move cursor to the next bookmark
+	vim.cmd("edit " .. bookmark.filepath)
+	vim.api.nvim_win_set_cursor(0, { bookmark.line, bookmark.column })
+end
+
+-- Function to jump to the next bookmark
 local function next()
 	if #bookmarks == 0 then
 		return
 	end
 
-	local currentPosition = vim.api.nvim_win_get_cursor(0)
-	local currentLine = currentPosition[1]
-	local currentFile = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-	local target = nil
+	local ctx = gather_context()
+	local next_bookmark = nil
+	local earliest_in_current_file = nil
+	local earliest_overall = bookmarks[1]
 
-	-- Sort bookmarks by file and line number
-	table.sort(bookmarks, function(a, b)
-		return a.path < b.path or (a.path == b.path and a.line < b.line)
-	end)
-
-	-- Find the next bookmark
 	for _, bookmark in ipairs(bookmarks) do
-		if bookmark.path > currentFile or (bookmark.path == currentFile and bookmark.line > currentLine) then
-			target = bookmark
-			break
+		-- Update earliest overall bookmark
+		if
+			bookmark.line < earliest_overall.line
+			or (bookmark.line == earliest_overall.line and bookmark.filepath < earliest_overall.filepath)
+		then
+			earliest_overall = bookmark
+		end
+
+		if bookmark.filepath == ctx.filepath then
+			-- Update earliest bookmark in current file
+			if not earliest_in_current_file or bookmark.line < earliest_in_current_file.line then
+				earliest_in_current_file = bookmark
+			end
+
+			-- Find the next bookmark in current file
+			if bookmark.line > ctx.line then
+				if not next_bookmark or bookmark.line < next_bookmark.line then
+					next_bookmark = bookmark
+				end
+			end
 		end
 	end
 
-	-- If no bookmark is found after current line and file, loop to the first bookmark
-	if not target then
-		target = bookmarks[1]
+	if next_bookmark then
+		go_to_bookmark(next_bookmark)
+	elseif earliest_in_current_file then
+		go_to_bookmark(earliest_in_current_file)
+	else
+		go_to_bookmark(earliest_overall)
 	end
-
-	-- Open the file if needed and move cursor to the next bookmark
-	vim.cmd("edit " .. target.path)
-	vim.api.nvim_win_set_cursor(0, { target.line, target.col })
 end
 
 -- Function to jump to the previous bookmark
 local function prev()
 	if #bookmarks == 0 then
 		return
-	end -- Exit if no bookmarks are set
+	end
 
-	local currentPosition = vim.api.nvim_win_get_cursor(0)
-	local currentLine = currentPosition[1]
-	local currentFile = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-	local target = nil
+	local ctx = gather_context()
+	local prev_bookmark = nil
+	local latest_in_current_file = nil
+	local latest_overall = bookmarks[1]
 
-	-- Sort bookmarks by file and line number in reverse order for easy looping to previous
-	table.sort(bookmarks, function(a, b)
-		return a.path > b.path or (a.path == b.path and a.line > b.line)
-	end)
-
-	-- Find the previous bookmark
 	for _, bookmark in ipairs(bookmarks) do
-		if bookmark.path < currentFile or (bookmark.path == currentFile and bookmark.line < currentLine) then
-			target = bookmark
-			break
+		-- Update latest overall bookmark
+		if
+			bookmark.line > latest_overall.line
+			or (bookmark.line == latest_overall.line and bookmark.filepath > latest_overall.filepath)
+		then
+			latest_overall = bookmark
+		end
+
+		if bookmark.filepath == ctx.filepath then
+			-- Update latest bookmark in current file
+			if not latest_in_current_file or bookmark.line > latest_in_current_file.line then
+				latest_in_current_file = bookmark
+			end
+
+			-- Find the previous bookmark in current file
+			if bookmark.line < ctx.line then
+				if not prev_bookmark or bookmark.line > prev_bookmark.line then
+					prev_bookmark = bookmark
+				end
+			end
 		end
 	end
 
-	-- If no bookmark is found before current line and file, loop to the last bookmark
-	if not target then
-		target = bookmarks[#bookmarks]
-	end
-
-	-- Open the file if needed and move cursor to the previous bookmark
-	vim.cmd("edit " .. target.path)
-	vim.api.nvim_win_set_cursor(0, { target.line, target.col })
-end
-
--- Function to print the closes bookmark
-local function print()
-	if #bookmarks == 0 then
-		return
-	end
-
-	local currentFile = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-	local bookmarkInCurrentFile = false
-	for _, bookmark in ipairs(bookmarks) do
-		if bookmark.path == currentFile then
-			bookmarkInCurrentFile = true
-			break
-		end
-	end
-
-	if not bookmarkInCurrentFile then
-		return
-	end
-
-	local currentPosition = vim.api.nvim_win_get_cursor(0)
-	local currentLine = currentPosition[1]
-	local closestBookmark = bookmarks[1]
-	for _, bookmark in ipairs(bookmarks) do
-		local dist = math.abs(bookmark.line - currentLine)
-		local closesDistance = math.abs(closestBookmark.line - currentLine)
-		if dist < closesDistance then
-			closestBookmark = bookmark
-		end
-	end
-end
-
-local function printAll()
-	for i, pos in ipairs(bookmarks) do
-		print("Position " .. i .. ": Row " .. pos[1] .. ", Column " .. pos[2])
+	if prev_bookmark then
+		go_to_bookmark(prev_bookmark)
+	elseif latest_in_current_file then
+		go_to_bookmark(latest_in_current_file)
+	else
+		go_to_bookmark(latest_overall)
 	end
 end
 
 return {
-	add_bookmark = add_bookmark,
-	remove_bookmark = remove_bookmark,
-	is_bookmarked = is_bookmarked,
 	toggle = toggle,
 	next = next,
 	prev = prev,
-	print = print,
-	printAll = printAll,
 }
