@@ -1,8 +1,16 @@
 local vim = vim
 
-local default_config = {}
+local vscode_blue = "#3B7CF3"
 
-local setup = function() end
+local default_config = {
+	signs = {
+		mark = { icon = "󰃁", color = vscode_blue },
+	},
+}
+
+local setup = function()
+	require("bookmarks.sign").setup(default_config.signs)
+end
 
 return {
 	setup = setup,
