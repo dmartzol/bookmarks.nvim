@@ -1,3 +1,5 @@
+local context = require("bookmarks.context")
+
 local vim = vim
 local namespace = "BookmarksDefault"
 local highlight_group = "BookmarksSignDefault"
@@ -11,32 +13,8 @@ local highlight_group = "BookmarksSignDefault"
 ---@type bookmark[]
 local bookmarks = {}
 
----@class context
----@field buffer_number integer
----@field filepath string
----@field line integer
----@field column integer
-
----@class sign
----@field icon string
----@field color string
----@field line_bg string
-
--- Define the sign for bookmarks
--- mark = { icon = "󰃁", color = "red", line_bg = "#572626" },
-vim.fn.sign_define(highlight_group, { text = "󰃁", texthl = highlight_group })
-
--- Function to gather the context of the current buffer
--- @return context
-local function gather_context()
-	local bufer_number = vim.api.nvim_get_current_buf()
-	local buffer_path = vim.api.nvim_buf_get_name(bufer_number)
-	local current_position = vim.api.nvim_win_get_cursor(0)
-	local current_line, current_column = current_position[1], current_position[2]
-	return { buffer_number = bufer_number, filepath = buffer_path, line = current_line, column = current_column }
-end
-
 -- Function to add a bookmark from a context
+---@param ctx context
 local function add_bookmark(ctx)
 	-- if the id provided is zero, then a new id is generated
 	local new_id = 0
@@ -47,6 +25,7 @@ local function add_bookmark(ctx)
 end
 
 -- Function to remove a bookmark
+---@param ctx context
 local function remove_bookmark(ctx)
 	for i, bookmark in ipairs(bookmarks) do
 		if bookmark.line == ctx.line and ctx.filepath == bookmark.filepath then
@@ -68,7 +47,7 @@ local function is_bookmarked(ctx)
 end
 
 local function toggle()
-	local ctx = gather_context()
+	local ctx = context.gather()
 	if is_bookmarked(ctx) then
 		remove_bookmark(ctx)
 	else
@@ -89,7 +68,7 @@ local function next()
 		return
 	end
 
-	local ctx = gather_context()
+	local ctx = context.gather()
 	local next_bookmark = nil
 	local earliest_in_current_file = nil
 	local earliest_overall = bookmarks[1]
@@ -133,7 +112,7 @@ local function prev()
 		return
 	end
 
-	local ctx = gather_context()
+	local ctx = context.gather()
 	local prev_bookmark = nil
 	local latest_in_current_file = nil
 	local latest_overall = bookmarks[1]

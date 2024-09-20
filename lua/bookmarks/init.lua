@@ -1,4 +1,4 @@
 return {
-	config = require("bookmarks.config").setup,
+	setup = require("bookmarks.config").setup,
 	api = require("bookmarks.api"),
 }
