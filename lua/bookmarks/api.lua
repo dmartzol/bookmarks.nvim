@@ -16,11 +16,10 @@ local bookmarks = {}
 -- Function to add a bookmark from a context
 ---@param ctx context
 local function add_bookmark(ctx)
-	-- if the id provided is zero, then a new id is generated
+	-- we provide a zero id for vim to assign a new one for us
 	local new_id = 0
 	local sign_id = vim.fn.sign_place(new_id, namespace, highlight_group, ctx.buffer_number, { lnum = ctx.line })
 
-	-- Store bookmark with its full file path
 	table.insert(bookmarks, { filepath = ctx.filepath, line = ctx.line, column = ctx.column, id = sign_id })
 end
 
