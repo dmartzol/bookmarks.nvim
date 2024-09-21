@@ -1,4 +1,6 @@
 return {
 	setup = require("bookmarks.config").setup,
-	api = require("bookmarks.api"),
+	toggle = require("bookmarks.api").toggle,
+	prev = require("bookmarks.api").prev,
+	next = require("bookmarks.api").next,
 }
